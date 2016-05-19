@@ -56,6 +56,7 @@ namespace ts {
 
     const textToToken: Map<SyntaxKind> = {
         "abstract": SyntaxKind.AbstractKeyword,
+        "and": SyntaxKind.AndKeyword,
         "any": SyntaxKind.AnyKeyword,
         "as": SyntaxKind.AsKeyword,
         "boolean": SyntaxKind.BooleanKeyword,
@@ -88,12 +89,15 @@ namespace ts {
         "instanceof": SyntaxKind.InstanceOfKeyword,
         "interface": SyntaxKind.InterfaceKeyword,
         "is": SyntaxKind.IsKeyword,
+        "isnt": SyntaxKind.IsntKeyword,
         "let": SyntaxKind.LetKeyword,
         "module": SyntaxKind.ModuleKeyword,
         "namespace": SyntaxKind.NamespaceKeyword,
         "new": SyntaxKind.NewKeyword,
+        "not": SyntaxKind.NotKeyword,
         "null": SyntaxKind.NullKeyword,
         "number": SyntaxKind.NumberKeyword,
+        "or": SyntaxKind.OrKeyword,
         "package": SyntaxKind.PackageKeyword,
         "private": SyntaxKind.PrivateKeyword,
         "protected": SyntaxKind.ProtectedKeyword,
@@ -109,6 +113,7 @@ namespace ts {
         "switch": SyntaxKind.SwitchKeyword,
         "symbol": SyntaxKind.SymbolKeyword,
         "this": SyntaxKind.ThisKeyword,
+        "#": SyntaxKind.ThisKeyword,
         "throw": SyntaxKind.ThrowKeyword,
         "true": SyntaxKind.TrueKeyword,
         "try": SyntaxKind.TryKeyword,
@@ -1496,6 +1501,9 @@ namespace ts {
                     case CharacterCodes.at:
                         pos++;
                         return token = SyntaxKind.AtToken;
+                    case CharacterCodes.hash:
+                        pos++;
+                        return token = SyntaxKind.ThisKeyword;
                     case CharacterCodes.backslash:
                         let cookedChar = peekUnicodeEscape();
                         if (cookedChar >= 0 && isIdentifierStart(cookedChar, languageVersion)) {

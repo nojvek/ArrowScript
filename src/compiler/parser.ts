@@ -618,6 +618,20 @@ namespace ts {
                 fixupParentReferences(sourceFile);
             }
 
+            let idCount = 0;
+            let replacer = (key: string, val: any) => {
+                if (key === "kind") {
+                    return (<any>ts).SyntaxKind[val];
+                } else if (key === "flags") {
+                    return (val !== 0) ? (<any>ts).NodeFlags[val] : undefined;
+                } else if (key.match(/pos|end|__id/)) {
+                    return undefined;
+                }
+                return val;
+            }
+
+            //console && console.log(JSON.stringify(sourceFile.statements, replacer, '  '));
+
             return sourceFile;
         }
 
@@ -828,7 +842,9 @@ namespace ts {
         }
 
         function nextToken(): SyntaxKind {
-            return token = scanner.scan();
+            token = scanner.scan();
+            //console && console.log((<any>ts).SyntaxKind[token], scanner.getTokenText())
+            return token;
         }
 
         function reScanGreaterToken(): SyntaxKind {
@@ -2598,6 +2614,7 @@ namespace ts {
                 case SyntaxKind.MinusToken:
                 case SyntaxKind.TildeToken:
                 case SyntaxKind.ExclamationToken:
+                case SyntaxKind.NotKeyword:
                 case SyntaxKind.DeleteKeyword:
                 case SyntaxKind.TypeOfKeyword:
                 case SyntaxKind.VoidKeyword:
@@ -2702,7 +2719,7 @@ namespace ts {
             //      1) async[no LineTerminator here]AsyncArrowBindingIdentifier[?Yield][no LineTerminator here]=>AsyncConciseBody[?In]
             //      2) CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await][no LineTerminator here]=>AsyncConciseBody[?In]
             // Production (1) of AsyncArrowFunctionExpression is parsed in "tryParseAsyncSimpleArrowFunctionExpression".
-            // And production (2) is parsed in "tryParseParenthesizedArrowFunctionExpression". 
+            // And production (2) is parsed in "tryParseParenthesizedArrowFunctionExpression".
             //
             // If we do successfully parse arrow-function, we must *not* recurse for productions 1, 2 or 3. An ArrowFunction is
             // not a  LeftHandSideExpression, nor does it start a ConditionalExpression.  So we are done
@@ -3173,7 +3190,24 @@ namespace ts {
                     }
                 }
                 else {
-                    leftOperand = makeBinaryExpression(leftOperand, parseTokenNode(), parseBinaryExpressionOrHigher(newPrecedence));
+                    const operatorToken = parseTokenNode();
+
+                    switch (operatorToken.kind) {
+                        case SyntaxKind.IsKeyword: // 'is' alias of '==='
+                            operatorToken.kind = SyntaxKind.EqualsEqualsEqualsToken;
+                            break;
+                        case SyntaxKind.IsntKeyword: // 'isnt' is alias of '!=='
+                            operatorToken.kind = SyntaxKind.ExclamationEqualsEqualsToken;
+                            break;
+                        case SyntaxKind.AndKeyword: // 'and' is alais of '&&'
+                            operatorToken.kind = SyntaxKind.AmpersandAmpersandToken;
+                            break;
+                        case SyntaxKind.OrKeyword: // 'or' is alais of '||'
+                            operatorToken.kind = SyntaxKind.BarBarToken;
+                            break;
+                    }
+
+                    leftOperand = makeBinaryExpression(leftOperand, operatorToken, parseBinaryExpressionOrHigher(newPrecedence));
                 }
             }
 
@@ -3191,8 +3225,10 @@ namespace ts {
         function getBinaryOperatorPrecedence(): number {
             switch (token) {
                 case SyntaxKind.BarBarToken:
+                case SyntaxKind.OrKeyword:
                     return 1;
                 case SyntaxKind.AmpersandAmpersandToken:
+                case SyntaxKind.AndKeyword:
                     return 2;
                 case SyntaxKind.BarToken:
                     return 3;
@@ -3204,6 +3240,8 @@ namespace ts {
                 case SyntaxKind.ExclamationEqualsToken:
                 case SyntaxKind.EqualsEqualsEqualsToken:
                 case SyntaxKind.ExclamationEqualsEqualsToken:
+                case SyntaxKind.IsKeyword:
+                case SyntaxKind.IsntKeyword:
                     return 6;
                 case SyntaxKind.LessThanToken:
                 case SyntaxKind.GreaterThanToken:
@@ -3251,6 +3289,12 @@ namespace ts {
         function parsePrefixUnaryExpression() {
             const node = <PrefixUnaryExpression>createNode(SyntaxKind.PrefixUnaryExpression);
             node.operator = token;
+
+            // 'not' is an alias for '!'
+            if (node.operator === SyntaxKind.NotKeyword) {
+                node.operator = SyntaxKind.ExclamationToken;
+            }
+
             nextToken();
             node.operand = parseSimpleUnaryExpression();
 
@@ -3350,6 +3394,7 @@ namespace ts {
                 case SyntaxKind.MinusToken:
                 case SyntaxKind.TildeToken:
                 case SyntaxKind.ExclamationToken:
+                case SyntaxKind.NotKeyword:
                     return parsePrefixUnaryExpression();
                 case SyntaxKind.DeleteKeyword:
                     return parseDeleteExpression();
@@ -3385,6 +3430,7 @@ namespace ts {
                 case SyntaxKind.MinusToken:
                 case SyntaxKind.TildeToken:
                 case SyntaxKind.ExclamationToken:
+                case SyntaxKind.NotKeyword:
                 case SyntaxKind.DeleteKeyword:
                 case SyntaxKind.TypeOfKeyword:
                 case SyntaxKind.VoidKeyword:
@@ -3896,10 +3942,14 @@ namespace ts {
                 case SyntaxKind.QuestionToken:                  // foo<x>?
                 case SyntaxKind.EqualsEqualsToken:              // foo<x> ==
                 case SyntaxKind.EqualsEqualsEqualsToken:        // foo<x> ===
+                case SyntaxKind.IsKeyword:                      // foo<x> is
                 case SyntaxKind.ExclamationEqualsToken:         // foo<x> !=
                 case SyntaxKind.ExclamationEqualsEqualsToken:   // foo<x> !==
+                case SyntaxKind.IsntKeyword:                    // foo<x> isnt
                 case SyntaxKind.AmpersandAmpersandToken:        // foo<x> &&
+                case SyntaxKind.AndKeyword:                     // foo<x> and
                 case SyntaxKind.BarBarToken:                    // foo<x> ||
+                case SyntaxKind.OrKeyword:                      // foo<x> or
                 case SyntaxKind.CaretToken:                     // foo<x> ^
                 case SyntaxKind.AmpersandToken:                 // foo<x> &
                 case SyntaxKind.BarToken:                       // foo<x> |
@@ -4175,9 +4225,9 @@ namespace ts {
         function parseIfStatement(): IfStatement {
             const node = <IfStatement>createNode(SyntaxKind.IfStatement);
             parseExpected(SyntaxKind.IfKeyword);
-            parseExpected(SyntaxKind.OpenParenToken);
+            const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
             node.expression = allowInAnd(parseExpression);
-            parseExpected(SyntaxKind.CloseParenToken);
+            parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
             node.thenStatement = parseStatement();
             node.elseStatement = parseOptional(SyntaxKind.ElseKeyword) ? parseStatement() : undefined;
             return finishNode(node);
@@ -4188,9 +4238,9 @@ namespace ts {
             parseExpected(SyntaxKind.DoKeyword);
             node.statement = parseStatement();
             parseExpected(SyntaxKind.WhileKeyword);
-            parseExpected(SyntaxKind.OpenParenToken);
+            const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
             node.expression = allowInAnd(parseExpression);
-            parseExpected(SyntaxKind.CloseParenToken);
+            parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
 
             // From: https://mail.mozilla.org/pipermail/es-discuss/2011-August/016188.html
             // 157 min --- All allen at wirfs-brock.com CONF --- "do{;}while(false)false" prohibited in
@@ -4203,9 +4253,9 @@ namespace ts {
         function parseWhileStatement(): WhileStatement {
             const node = <WhileStatement>createNode(SyntaxKind.WhileStatement);
             parseExpected(SyntaxKind.WhileKeyword);
-            parseExpected(SyntaxKind.OpenParenToken);
+            const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
             node.expression = allowInAnd(parseExpression);
-            parseExpected(SyntaxKind.CloseParenToken);
+            parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
             node.statement = parseStatement();
             return finishNode(node);
         }
@@ -4213,7 +4263,7 @@ namespace ts {
         function parseForOrForInOrForOfStatement(): Statement {
             const pos = getNodePos();
             parseExpected(SyntaxKind.ForKeyword);
-            parseExpected(SyntaxKind.OpenParenToken);
+            const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
 
             let initializer: VariableDeclarationList | Expression = undefined;
             if (token !== SyntaxKind.SemicolonToken) {
@@ -4229,14 +4279,14 @@ namespace ts {
                 const forInStatement = <ForInStatement>createNode(SyntaxKind.ForInStatement, pos);
                 forInStatement.initializer = initializer;
                 forInStatement.expression = allowInAnd(parseExpression);
-                parseExpected(SyntaxKind.CloseParenToken);
+                parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
                 forOrForInOrForOfStatement = forInStatement;
             }
             else if (parseOptional(SyntaxKind.OfKeyword)) {
                 const forOfStatement = <ForOfStatement>createNode(SyntaxKind.ForOfStatement, pos);
                 forOfStatement.initializer = initializer;
                 forOfStatement.expression = allowInAnd(parseAssignmentExpressionOrHigher);
-                parseExpected(SyntaxKind.CloseParenToken);
+                parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
                 forOrForInOrForOfStatement = forOfStatement;
             }
             else {
@@ -4250,7 +4300,7 @@ namespace ts {
                 if (token !== SyntaxKind.CloseParenToken) {
                     forStatement.incrementor = allowInAnd(parseExpression);
                 }
-                parseExpected(SyntaxKind.CloseParenToken);
+                parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
                 forOrForInOrForOfStatement = forStatement;
             }
 
@@ -4286,9 +4336,9 @@ namespace ts {
         function parseWithStatement(): WithStatement {
             const node = <WithStatement>createNode(SyntaxKind.WithStatement);
             parseExpected(SyntaxKind.WithKeyword);
-            parseExpected(SyntaxKind.OpenParenToken);
+            const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
             node.expression = allowInAnd(parseExpression);
-            parseExpected(SyntaxKind.CloseParenToken);
+            parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
             node.statement = parseStatement();
             return finishNode(node);
         }
@@ -4317,9 +4367,9 @@ namespace ts {
         function parseSwitchStatement(): SwitchStatement {
             const node = <SwitchStatement>createNode(SyntaxKind.SwitchStatement);
             parseExpected(SyntaxKind.SwitchKeyword);
-            parseExpected(SyntaxKind.OpenParenToken);
+            const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
             node.expression = allowInAnd(parseExpression);
-            parseExpected(SyntaxKind.CloseParenToken);
+            parsedOpenParen ? parseExpected(SyntaxKind.CloseParenToken) : undefined;
             const caseBlock = <CaseBlock>createNode(SyntaxKind.CaseBlock, scanner.getStartPos());
             parseExpected(SyntaxKind.OpenBraceToken);
             caseBlock.clauses = parseList(ParsingContext.SwitchClauses, parseCaseOrDefaultClause);

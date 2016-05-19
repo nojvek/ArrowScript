@@ -25,6 +25,7 @@ namespace ts {
 
     // token > SyntaxKind.Identifer => token is a keyword
     // Also, If you add a new SyntaxKind be sure to keep the `Markers` section at the bottom in sync
+    // TO ASK: What does keep the `Markers` section in sync mean ?
     export const enum SyntaxKind {
         Unknown,
         EndOfFileToken,
@@ -153,6 +154,7 @@ namespace ts {
         YieldKeyword,
         // Contextual keywords
         AbstractKeyword,
+        AndKeyword,
         AsKeyword,
         AnyKeyword,
         AsyncKeyword,
@@ -162,8 +164,11 @@ namespace ts {
         DeclareKeyword,
         GetKeyword,
         IsKeyword,
+        IsntKeyword,
         ModuleKeyword,
         NamespaceKeyword,
+        NotKeyword,
+        OrKeyword,
         ReadonlyKeyword,
         RequireKeyword,
         NumberKeyword,
