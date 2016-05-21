@@ -1,31 +1,39 @@
-var hello;
-(function (hello) {
-    function a() {
+module hello {
+    export function a() {
         return "yay";
     }
-    hello.a = a;
-})(hello || (hello = {}));
-var Yo = (function () {
-    function Yo() {
-        this.var2 = 2;
-        this.varTwo = "two";
-        this.props = {};
-    }
-    Yo.prototype.yo = function () {
+}
+
+interface Ifacey {
+    prop: string
+    hello: string
+}
+
+class Yo {
+    private var2 = 2
+    private varTwo = "two"
+    private props: any = {}
+
+    public yo() {
         //this.varTwo = "yay!";
-        this.var2 = 10;
-        var b;
-        if (b < -3) {
+        #.var2 = 10;
+        let b:number;
+
+        if b < -3 {
+
         }
-        var func = function () {
-            return <hello></hello>;
-        };
-        return <div className="result">
+
+        let func = () -> {
+            -< <hello></hello>
+        }
+
+        -< <div className="result">
             Hello
         </div>;
-    };
-    return Yo;
-}());
+    }
+
+}
+
 // Ypescript
 /**
 # = this, @ is reserved for decorators
@@ -51,3 +59,4 @@ $ =>
 
 
  */
+

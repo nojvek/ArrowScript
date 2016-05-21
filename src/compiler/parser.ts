@@ -4324,7 +4324,14 @@ namespace ts {
         function parseReturnStatement(): ReturnStatement {
             const node = <ReturnStatement>createNode(SyntaxKind.ReturnStatement);
 
-            parseExpected(SyntaxKind.ReturnKeyword);
+            // -< Feater arrows are the same as 'return' keyword
+            if (token === SyntaxKind.MinusLessThanToken) {
+                parseExpected(SyntaxKind.MinusLessThanToken);
+            }
+            else {
+                parseExpected(SyntaxKind.ReturnKeyword);
+            }
+
             if (!canParseSemicolon()) {
                 node.expression = allowInAnd(parseExpression);
             }
@@ -4566,6 +4573,7 @@ namespace ts {
                 case SyntaxKind.ContinueKeyword:
                 case SyntaxKind.BreakKeyword:
                 case SyntaxKind.ReturnKeyword:
+                case SyntaxKind.MinusLessThanToken:
                 case SyntaxKind.WithKeyword:
                 case SyntaxKind.SwitchKeyword:
                 case SyntaxKind.ThrowKeyword:
@@ -4647,6 +4655,7 @@ namespace ts {
                 case SyntaxKind.BreakKeyword:
                     return parseBreakOrContinueStatement(SyntaxKind.BreakStatement);
                 case SyntaxKind.ReturnKeyword:
+                case SyntaxKind.MinusLessThanToken:
                     return parseReturnStatement();
                 case SyntaxKind.WithKeyword:
                     return parseWithStatement();

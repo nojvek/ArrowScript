@@ -147,6 +147,8 @@ namespace ts {
         "===": SyntaxKind.EqualsEqualsEqualsToken,
         "!==": SyntaxKind.ExclamationEqualsEqualsToken,
         "=>": SyntaxKind.EqualsGreaterThanToken,
+        "->": SyntaxKind.EqualsGreaterThanToken, // behaves exactly the same as fat arrow =>
+        "-<": SyntaxKind.MinusLessThanToken, // behaves like return
         "+": SyntaxKind.PlusToken,
         "-": SyntaxKind.MinusToken,
         "**": SyntaxKind.AsteriskAsteriskToken,
@@ -1274,6 +1276,12 @@ namespace ts {
                         }
                         if (text.charCodeAt(pos + 1) === CharacterCodes.equals) {
                             return pos += 2, token = SyntaxKind.MinusEqualsToken;
+                        }
+                        if (text.charCodeAt(pos + 1) === CharacterCodes.lessThan) {
+                            return pos += 2, token = SyntaxKind.MinusLessThanToken;
+                        }
+                        if (text.charCodeAt(pos + 1) === CharacterCodes.greaterThan) {
+                            return pos += 2, token = SyntaxKind.EqualsGreaterThanToken;
                         }
                         pos++;
                         return token = SyntaxKind.MinusToken;
