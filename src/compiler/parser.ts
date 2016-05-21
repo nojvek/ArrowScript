@@ -2885,7 +2885,6 @@ namespace ts {
             }
 
             if (token === SyntaxKind.EqualsGreaterThanToken) {
-                // ERROR RECOVERY TWEAK:
                 // If we see a standalone => try to parse it as an arrow function expression as that's
                 // likely what the user intended to write.
                 return Tristate.True;
@@ -3044,14 +3043,21 @@ namespace ts {
             setModifiers(node, parseModifiersForArrowFunction());
             const isAsync = !!(node.flags & NodeFlags.Async);
 
-            // Arrow functions are never generators.
-            //
-            // If we're speculatively parsing a signature for a parenthesized arrow function, then
-            // we have to have a complete parameter list.  Otherwise we might see something like
-            // a => (b => c)
-            // And think that "(b =>" was actually a parenthesized arrow function with a missing
-            // close paren.
-            fillSignature(SyntaxKind.ColonToken, /*yieldContext*/ false, /*awaitContext*/ isAsync, /*requireCompleteParameterList*/ !allowAmbiguity, node);
+            // Empty parens are optional for arrow functions like coffeescript
+            // This means let a = => 5 is valid
+            if (token === SyntaxKind.EqualsGreaterThanToken) {
+                node.parameters = createMissingList<ParameterDeclaration>()
+            }
+            else {
+                // Arrow functions are never generators.
+                //
+                // If we're speculatively parsing a signature for a parenthesized arrow function, then
+                // we have to have a complete parameter list.  Otherwise we might see something like
+                // a => (b => c)
+                // And think that "(b =>" was actually a parenthesized arrow function with a missing
+                // close paren.
+                fillSignature(SyntaxKind.ColonToken, /*yieldContext*/ false, /*awaitContext*/ isAsync, /*requireCompleteParameterList*/ !allowAmbiguity, node);
+            }
 
             // If we couldn't get parameters, we definitely could not parse out an arrow function.
             if (!node.parameters) {

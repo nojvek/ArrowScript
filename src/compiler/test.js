@@ -1,31 +1,8 @@
-var hello;
-(function (hello) {
-    function a() {
-        return "yay";
-    }
-    hello.a = a;
-})(hello || (hello = {}));
-var Yo = (function () {
-    function Yo() {
-        this.var2 = 2;
-        this.varTwo = "two";
-        this.props = {};
-    }
-    Yo.prototype.yo = function () {
-        //this.varTwo = "yay!";
-        this.var2 = 10;
-        var b;
-        if (b < -3) {
-        }
-        var func = function () {
-            return <hello></hello>;
-        };
-        return <div className="result">
-            Hello
-        </div>;
-    };
-    return Yo;
-}());
+var l = function () { return 1 + 2; };
+var y = function () {
+    return l() + 2;
+};
+y();
 // Ypescript
 /**
 # = this, @ is reserved for decorators

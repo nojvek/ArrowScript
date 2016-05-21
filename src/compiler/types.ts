@@ -54,6 +54,8 @@ namespace ts {
         CloseParenToken,
         OpenBracketToken,
         CloseBracketToken,
+        IndentToken,
+        OutdentToken,
         DotToken,
         DotDotDotToken,
         SemicolonToken,

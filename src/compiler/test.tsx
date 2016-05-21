@@ -1,38 +1,11 @@
-module hello {
-    export function a() {
-        return "yay";
-    }
+
+let l = -> 1 + 2
+
+let y = -> {
+    -< l() + 2
 }
 
-interface Ifacey {
-    prop: string
-    hello: string
-}
-
-class Yo {
-    private var2 = 2
-    private varTwo = "two"
-    private props: any = {}
-
-    public yo() {
-        //this.varTwo = "yay!";
-        #.var2 = 10;
-        let b:number;
-
-        if b < -3 {
-
-        }
-
-        let func = () -> {
-            -< <hello></hello>
-        }
-
-        -< <div className="result">
-            Hello
-        </div>;
-    }
-
-}
+y()
 
 // Ypescript
 /**

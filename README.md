@@ -1,94 +1,101 @@
-[![Build Status](https://travis-ci.org/Microsoft/TypeScript.svg?branch=master)](https://travis-ci.org/Microsoft/TypeScript)
-[![npm version](https://badge.fury.io/js/typescript.svg)](https://www.npmjs.com/package/typescript)
-[![Downloads](https://img.shields.io/npm/dm/TypeScript.svg)](https://www.npmjs.com/package/typescript)
+# TyScript
 
-# TypeScript
+TyScript is built upon Typescript to support additional like language syntax inspired from coffeescript.
 
-[![Join the chat at https://gitter.im/Microsoft/TypeScript](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Microsoft/TypeScript?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+TyScript = TypeScript + Syntatic Sugar
+TypeScript = JavaScript + Types
+TyScript = JavaScript + Types + Syntactic Sugar
 
-[TypeScript](http://www.typescriptlang.org/) is a language for application-scale JavaScript. TypeScript adds optional types, classes, and modules to JavaScript. TypeScript supports tools for large-scale JavaScript applications for any browser, for any host, on any OS. TypeScript compiles to readable, standards-based JavaScript. Try it out at the [playground](http://www.typescriptlang.org/Playground), and stay up to date via [our blog](http://blogs.msdn.com/typescript) and [Twitter account](https://twitter.com/typescriptlang).
+# Why? Why not?
+
+TypeScript bundled with Language Service server offers a great development environment.
+Excellent intellisense and error checking as you type is possible because TypeScript has an architecture built for long lived compilations.
+
 
 ## Installing
 
-For the latest stable version:
-
 ```
-npm install -g typescript
+npm install -g tyscript
 ```
 
-For our nightly builds:
+## Features
+
+#### Indented blocks work as curlys. Optional parens around if, for, while, switch
 
 ```
-npm install -g typescript@next
-```
+namespace somelib
+	interface INode
+    	str: string
+        nums: number[]
+        node: INode
 
-## Contribute
+	class SomeClass
+    	private hello:string = ""
+    	constructor(greetings: string)
+            if greetings isnt "arrg!"
+            	console.log(greetings)
+                #.hello = greetings // # is an alias of 'this'
 
-There are many ways to [contribute](https://github.com/Microsoft/TypeScript/blob/master/CONTRIBUTING.md) to TypeScript.
-* [Submit bugs](https://github.com/Microsoft/TypeScript/issues) and help us verify fixes as they are checked in.
-* Review the [source code changes](https://github.com/Microsoft/TypeScript/pulls).
-* Engage with other TypeScript users and developers on [StackOverflow](http://stackoverflow.com/questions/tagged/typescript). 
-* Join the [#typescript](http://twitter.com/#!/search/realtime/%23typescript) discussion on Twitter.
-* [Contribute bug fixes](https://github.com/Microsoft/TypeScript/blob/master/CONTRIBUTING.md).
-* Read the language specification ([docx](https://github.com/Microsoft/TypeScript/blob/master/doc/TypeScript%20Language%20Specification.docx?raw=true), [pdf](https://github.com/Microsoft/TypeScript/blob/master/doc/TypeScript%20Language%20Specification.pdf?raw=true), [md](https://github.com/Microsoft/TypeScript/blob/master/doc/spec.md)).
+            for let i = 0; i < 10; i++
+            	console.log(i, greetings)
 
+        public get node(): INode
+        	-< // -< is an alias of return
+            	str: #.hello
+                num: [10, 11, 12]
+                node:
+                	str: "yo"
+                    nums: [
+                    	13
+                        14
+                        15
+                    ]
+                    node: unll
 
-## Documentation
-
-*  [Quick tutorial](http://www.typescriptlang.org/Tutorial)
-*  [Programming handbook](http://www.typescriptlang.org/Handbook)
-*  [Language specification](https://github.com/Microsoft/TypeScript/blob/master/doc/spec.md)
-*  [Homepage](http://www.typescriptlang.org/)
-
-## Building
-
-In order to build the TypeScript compiler, ensure that you have [Git](http://git-scm.com/downloads) and [Node.js](http://nodejs.org/) installed.
-
-Clone a copy of the repo:
-
-```
-git clone https://github.com/Microsoft/TypeScript.git
-```
-
-Change to the TypeScript directory:
-
-```
-cd TypeScript
-```
-
-Install Jake tools and dev dependencies:
-
-```
-npm install -g jake
-npm install
-```
-
-Use one of the following to build and test:
-
-```
-jake local            # Build the compiler into built/local 
-jake clean            # Delete the built compiler 
-jake LKG              # Replace the last known good with the built one.
-                      # Bootstrapping step to be executed when the built compiler reaches a stable state.
-jake tests            # Build the test infrastructure using the built compiler. 
-jake runtests         # Run tests using the built compiler and test infrastructure. 
-                      # You can override the host or specify a test for this command. 
-                      # Use host=<hostName> or tests=<testPath>. 
-jake runtests-browser # Runs the tests using the built run.js file. Syntax is jake runtests. Optional
-                        parameters 'host=', 'tests=[regex], reporter=[list|spec|json|<more>]'.
-jake baseline-accept  # This replaces the baseline test results with the results obtained from jake runtests.
-jake lint             # Runs tslint on the TypeScript source.
-jake -T               # List the above commands. 
 ```
 
 
-## Usage
+#### Thin, fat and feather arrows
+Thin Arrows (->) are an alias of Fat arrows (=>). They behave exactly the same way.
+The empty parenthesis for arrow functions are not needed.
 
-```shell
-node built/local/tsc.js hello.ts
+Note: arrows only auto return if they are on the same line
+
+'-<' is an alias of 'return'.
+
+```
+let a = () => console.log("aye")
+let b = () -> console.log("aye")
+let c = => console.log("aye")
+let d = -> console.log("aye")
+// a, b, c, d are all the same
+
+let func = x ->
+	doSomething(x)
+    let z = doSomethingMore(y)
+    z = z * z
+    -< z
 ```
 
+#### is, isnt, #
 
-## Roadmap
+```
+if (x is 5 || x === 5) // is is an alias of ===
+if (y isnt 5 || y !== 5) // isnt is an alis of !===
+if (this is #) // # is an alias of 'this'
 
-For details on our planned features and future direction please refer to our [roadmap](https://github.com/Microsoft/TypeScript/wiki/Roadmap).
+```
+
+#### optional parens in first function invocation in a line
+```
+$ ->
+	console.log "Jquery Started"
+    let arr = []
+    arr.push 1
+    arr.push 2, 3, 4
+    arr.push 2,3,4 $ window // Error, parenthesis needed like $(window)
+
+    $(".row").on 'click', e ->
+    	console.log e.clientX, e.clientY
+
+```
