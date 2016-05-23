@@ -56,6 +56,7 @@ namespace somelib
 
 
 #### Thin, fat and feather arrows
+
 Thin Arrows (->) are an alias of Fat arrows (=>). They behave exactly the same way.
 The empty parenthesis for arrow functions are not needed.
 
@@ -87,6 +88,7 @@ if (this is #) // # is an alias of 'this'
 ```
 
 #### optional parens in first function invocation in a line
+
 ```
 $ ->
 	console.log "Jquery Started"

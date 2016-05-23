@@ -112,8 +112,8 @@ namespace ts {
         "super": SyntaxKind.SuperKeyword,
         "switch": SyntaxKind.SwitchKeyword,
         "symbol": SyntaxKind.SymbolKeyword,
-        "this": SyntaxKind.ThisKeyword,
         "#": SyntaxKind.ThisKeyword,
+        "this": SyntaxKind.ThisKeyword,
         "throw": SyntaxKind.ThrowKeyword,
         "true": SyntaxKind.TrueKeyword,
         "try": SyntaxKind.TryKeyword,
@@ -146,9 +146,9 @@ namespace ts {
         "!=": SyntaxKind.ExclamationEqualsToken,
         "===": SyntaxKind.EqualsEqualsEqualsToken,
         "!==": SyntaxKind.ExclamationEqualsEqualsToken,
-        "=>": SyntaxKind.EqualsGreaterThanToken,
         "->": SyntaxKind.EqualsGreaterThanToken, // behaves exactly the same as fat arrow =>
         "-<": SyntaxKind.MinusLessThanToken, // behaves like return
+        "=>": SyntaxKind.EqualsGreaterThanToken,
         "+": SyntaxKind.PlusToken,
         "-": SyntaxKind.MinusToken,
         "**": SyntaxKind.AsteriskAsteriskToken,
