@@ -110,32 +110,32 @@ let data =
 
 let render = (data) ->
 	with data
-		-<
-		<html>
-			<head>
-			<body>
-				<.nav>
-				<.intro>
-					<.bg style={'background-image':`url({profile.cover_pic})`}>
-					<.profile>
-						<.profile-pic style={'background-image':`url({profile.cover_pic})`}>
-						<.iam> I AM
-						<h1.name> {profile.name}
-						<p.blurb> {profile.blurb}
-				<.experiences.container>
-					<.row>
-						<h2.col-sm-12> Experience
-					<.experience>
-						{> experiences.map(> e ->>
-							<.info.row>
-								<.col-sm-8>
-									<a.company href={e.company_url}> {e.company_name}
-									<.position> {e.position} . {e.duration} <br/> {e.location}
-							{> e.projects.map(> p ->>
-								<.project.row>
-									<.video.col-sm-6>
-										<iframe src={`https://www.youtube.com/embed/{p.video_url}`} allowfullscreen>
-									<.desc.col-sm-6>
-										{> p.desc.map(> line ->>
-											<p> {line}
+		-< (>
+			<html>
+				<head>
+				<body>
+					<.nav>
+					<.intro>
+						<.bg style={'background-image':`url({profile.cover_pic})`}>
+						<.profile>
+							<.profile-pic style={'background-image':`url({profile.cover_pic})`}>
+							<.iam> I AM
+							<h1.name> {profile.name}
+							<p.blurb> {profile.blurb}
+					<.experiences.container>
+						<.row>
+							<h2.col-sm-12> Experience
+						<.experience>
+							{> experiences.map(> e ->>
+								<.info.row>
+									<.col-sm-8>
+										<a.company href={e.company_url}> {e.company_name}
+										<.position> {e.position} . {e.duration} <br/> {e.location}
+								{> e.projects.map(> p ->>
+									<.project.row>
+										<.video.col-sm-6>
+											<iframe src={`https://www.youtube.com/embed/{p.video_url}`} allowfullscreen>
+										<.desc.col-sm-6>
+											{> p.desc.map(> line ->>
+												<p> {line}
 

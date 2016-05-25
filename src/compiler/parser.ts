@@ -630,9 +630,15 @@ namespace ts {
                 return val;
             }
 
-            //console && console.log(JSON.stringify(sourceFile.statements, replacer, '  '));
+            log(JSON.stringify(sourceFile.statements, replacer, '  '))
 
             return sourceFile;
+        }
+
+        function log(msg: any) {
+            if (!sourceFile.fileName.match(/\.d\.ts$/)) {
+                console.log(msg);
+            }
         }
 
 
@@ -843,7 +849,7 @@ namespace ts {
 
         function nextToken(): SyntaxKind {
             token = scanner.scan();
-            //console && console.log((<any>ts).SyntaxKind[token], scanner.getTokenText())
+            log((<any>ts).SyntaxKind[token] + " " + scanner.getTokenText());
             return token;
         }
 
@@ -4185,8 +4191,16 @@ namespace ts {
 
         // STATEMENTS
         function parseBlock(ignoreMissingOpenBrace: boolean, diagnosticMessage?: DiagnosticMessage): Block {
+            log(arguments.callee);
+
             const node = <Block>createNode(SyntaxKind.Block);
-            if (parseExpected(SyntaxKind.OpenBraceToken, diagnosticMessage) || ignoreMissingOpenBrace) {
+            if (token === SyntaxKind.IndentToken) {
+                parseExpected(SyntaxKind.IndentToken);
+                node.statements = parseList(ParsingContext.BlockStatements, parseStatement);
+                scanner.parseOutdent();
+            }
+
+            else if (parseExpected(SyntaxKind.OpenBraceToken, diagnosticMessage) || ignoreMissingOpenBrace) {
                 node.statements = parseList(ParsingContext.BlockStatements, parseStatement);
                 parseExpected(SyntaxKind.CloseBraceToken);
             }
@@ -4229,6 +4243,7 @@ namespace ts {
         }
 
         function parseIfStatement(): IfStatement {
+            log(arguments.callee);
             const node = <IfStatement>createNode(SyntaxKind.IfStatement);
             parseExpected(SyntaxKind.IfKeyword);
             const parsedOpenParen = parseOptional(SyntaxKind.OpenParenToken);
@@ -4632,10 +4647,13 @@ namespace ts {
         }
 
         function parseStatement(): Statement {
+            log(arguments.callee);
             switch (token) {
                 case SyntaxKind.SemicolonToken:
                     return parseEmptyStatement();
                 case SyntaxKind.OpenBraceToken:
+                case SyntaxKind.OpenBraceArrowToken:
+                case SyntaxKind.IndentToken:
                     return parseBlock(/*ignoreMissingOpenBrace*/ false);
                 case SyntaxKind.VarKeyword:
                     return parseVariableStatement(scanner.getStartPos(), /*decorators*/ undefined, /*modifiers*/ undefined);

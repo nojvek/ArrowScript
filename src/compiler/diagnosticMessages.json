@@ -2751,7 +2751,7 @@
     "Resolving real path for '{0}', result '{1}'": {
         "category": "Message",
         "code": 6130
-    },    
+    },
     "Variable '{0}' implicitly has an '{1}' type.": {
         "category": "Error",
         "code": 7005
@@ -2959,5 +2959,15 @@
     "Unknown typing option '{0}'.": {
         "category": "Error",
         "code": 17010
+    },
+
+    "Indentation character mismatch. Can't have both tab and space based indentation in same file": {
+        "category": "Error",
+        "code": 20000
+    },
+    "'Indentation level mismatch": {
+        "category": "Error",
+        "code": 20001
     }
+
 }

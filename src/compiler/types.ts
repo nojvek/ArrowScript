@@ -49,10 +49,13 @@ namespace ts {
         TemplateTail,
         // Punctuation
         OpenBraceToken,
+        OpenBraceArrowToken,
         CloseBraceToken,
         OpenParenToken,
+        OpenParenArrowToken,
         CloseParenToken,
         OpenBracketToken,
+        OpenBracketArrowToken,
         CloseBracketToken,
         IndentToken,
         OutdentToken,

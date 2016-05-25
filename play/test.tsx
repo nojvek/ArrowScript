@@ -1,11 +1,11 @@
 
-let l = -> 1 + 2
 
-let y = -> {
-    -< l() + 2
-}
-
-y()
+let f = ->
+    if true
+        "asfasdf"
+        console.log("asdfasdfasdf")
+        "Asdf"
+        -< "whoop 			"
 
 // Ypescript
 /**

@@ -52,6 +52,11 @@ namespace ts {
         // callback returns something truthy, then the scanner state is not rolled back.  The result
         // of invoking the callback is returned from this function.
         tryScan<T>(callback: () => T): T;
+
+        // Parser will ask scanner for indent and outdents rather than receive as tokens
+        hasIndent(): boolean;
+        parseIndent(): boolean;
+        parseOutdent(): boolean;
     }
 
     const textToToken: Map<SyntaxKind> = {
@@ -129,10 +134,13 @@ namespace ts {
         "await": SyntaxKind.AwaitKeyword,
         "of": SyntaxKind.OfKeyword,
         "{": SyntaxKind.OpenBraceToken,
+        "{>": SyntaxKind.OpenBraceArrowToken,
         "}": SyntaxKind.CloseBraceToken,
         "(": SyntaxKind.OpenParenToken,
+        "(>": SyntaxKind.OpenParenArrowToken,
         ")": SyntaxKind.CloseParenToken,
         "[": SyntaxKind.OpenBracketToken,
+        "[>": SyntaxKind.OpenBracketArrowToken,
         "]": SyntaxKind.CloseBracketToken,
         ".": SyntaxKind.DotToken,
         "...": SyntaxKind.DotDotDotToken,
@@ -385,141 +393,141 @@ namespace ts {
             ch === CharacterCodes.mathematicalSpace ||
             ch === CharacterCodes.ideographicSpace ||
             ch === CharacterCodes.byteOrderMark;
-      }
+    }
 
-      export function isLineBreak(ch: number): boolean {
-          // ES5 7.3:
-          // The ECMAScript line terminator characters are listed in Table 3.
-          //     Table 3: Line Terminator Characters
-          //     Code Unit Value     Name                    Formal Name
-          //     \u000A              Line Feed               <LF>
-          //     \u000D              Carriage Return         <CR>
-          //     \u2028              Line separator          <LS>
-          //     \u2029              Paragraph separator     <PS>
-          // Only the characters in Table 3 are treated as line terminators. Other new line or line
-          // breaking characters are treated as white space but not as line terminators.
+    export function isLineBreak(ch: number): boolean {
+        // ES5 7.3:
+        // The ECMAScript line terminator characters are listed in Table 3.
+        //     Table 3: Line Terminator Characters
+        //     Code Unit Value     Name                    Formal Name
+        //     \u000A              Line Feed               <LF>
+        //     \u000D              Carriage Return         <CR>
+        //     \u2028              Line separator          <LS>
+        //     \u2029              Paragraph separator     <PS>
+        // Only the characters in Table 3 are treated as line terminators. Other new line or line
+        // breaking characters are treated as white space but not as line terminators.
 
-          return ch === CharacterCodes.lineFeed ||
-              ch === CharacterCodes.carriageReturn ||
-              ch === CharacterCodes.lineSeparator ||
-              ch === CharacterCodes.paragraphSeparator;
-      }
+        return ch === CharacterCodes.lineFeed ||
+            ch === CharacterCodes.carriageReturn ||
+            ch === CharacterCodes.lineSeparator ||
+            ch === CharacterCodes.paragraphSeparator;
+    }
 
-      function isDigit(ch: number): boolean {
-          return ch >= CharacterCodes._0 && ch <= CharacterCodes._9;
-      }
+    function isDigit(ch: number): boolean {
+        return ch >= CharacterCodes._0 && ch <= CharacterCodes._9;
+    }
 
-      /* @internal */
-      export function isOctalDigit(ch: number): boolean {
-          return ch >= CharacterCodes._0 && ch <= CharacterCodes._7;
-      }
+    /* @internal */
+    export function isOctalDigit(ch: number): boolean {
+        return ch >= CharacterCodes._0 && ch <= CharacterCodes._7;
+    }
 
-      export function couldStartTrivia(text: string, pos: number): boolean {
-          // Keep in sync with skipTrivia
-          const ch = text.charCodeAt(pos);
-          switch (ch) {
-              case CharacterCodes.carriageReturn:
-              case CharacterCodes.lineFeed:
-              case CharacterCodes.tab:
-              case CharacterCodes.verticalTab:
-              case CharacterCodes.formFeed:
-              case CharacterCodes.space:
-              case CharacterCodes.slash:
-                  // starts of normal trivia
-              case CharacterCodes.lessThan:
-              case CharacterCodes.equals:
-              case CharacterCodes.greaterThan:
-                  // Starts of conflict marker trivia
-                  return true;
-              case CharacterCodes.hash:
-                  // Only if its the beginning can we have #! trivia
-                  return pos === 0;
-              default:
-                  return ch > CharacterCodes.maxAsciiCharacter;
-          }
-      }
+    export function couldStartTrivia(text: string, pos: number): boolean {
+        // Keep in sync with skipTrivia
+        const ch = text.charCodeAt(pos);
+        switch (ch) {
+            case CharacterCodes.carriageReturn:
+            case CharacterCodes.lineFeed:
+            case CharacterCodes.tab:
+            case CharacterCodes.verticalTab:
+            case CharacterCodes.formFeed:
+            case CharacterCodes.space:
+            case CharacterCodes.slash:
+                // starts of normal trivia
+            case CharacterCodes.lessThan:
+            case CharacterCodes.equals:
+            case CharacterCodes.greaterThan:
+                // Starts of conflict marker trivia
+                return true;
+            case CharacterCodes.hash:
+                // Only if its the beginning can we have #! trivia
+                return pos === 0;
+            default:
+                return ch > CharacterCodes.maxAsciiCharacter;
+        }
+    }
 
-      /* @internal */
-      export function skipTrivia(text: string, pos: number, stopAfterLineBreak?: boolean): number {
-          // Using ! with a greater than test is a fast way of testing the following conditions:
-          //  pos === undefined || pos === null || isNaN(pos) || pos < 0;
-          if (!(pos >= 0)) {
-              return pos;
-          }
+    /* @internal */
+    export function skipTrivia(text: string, pos: number, stopAfterLineBreak?: boolean): number {
+        // Using ! with a greater than test is a fast way of testing the following conditions:
+        //  pos === undefined || pos === null || isNaN(pos) || pos < 0;
+        if (!(pos >= 0)) {
+            return pos;
+        }
 
-          // Keep in sync with couldStartTrivia
-          while (true) {
-              const ch = text.charCodeAt(pos);
-              switch (ch) {
-                  case CharacterCodes.carriageReturn:
-                      if (text.charCodeAt(pos + 1) === CharacterCodes.lineFeed) {
-                          pos++;
-                      }
-                  case CharacterCodes.lineFeed:
-                      pos++;
-                      if (stopAfterLineBreak) {
-                          return pos;
-                      }
-                      continue;
-                  case CharacterCodes.tab:
-                  case CharacterCodes.verticalTab:
-                  case CharacterCodes.formFeed:
-                  case CharacterCodes.space:
-                      pos++;
-                      continue;
-                  case CharacterCodes.slash:
-                      if (text.charCodeAt(pos + 1) === CharacterCodes.slash) {
-                          pos += 2;
-                          while (pos < text.length) {
-                              if (isLineBreak(text.charCodeAt(pos))) {
-                                  break;
-                              }
-                              pos++;
-                          }
-                          continue;
-                      }
-                      if (text.charCodeAt(pos + 1) === CharacterCodes.asterisk) {
-                          pos += 2;
-                          while (pos < text.length) {
-                              if (text.charCodeAt(pos) === CharacterCodes.asterisk && text.charCodeAt(pos + 1) === CharacterCodes.slash) {
-                                  pos += 2;
-                                  break;
-                              }
-                              pos++;
-                          }
-                          continue;
-                      }
-                      break;
+        // Keep in sync with couldStartTrivia
+        while (true) {
+            const ch = text.charCodeAt(pos);
+            switch (ch) {
+                case CharacterCodes.carriageReturn:
+                    if (text.charCodeAt(pos + 1) === CharacterCodes.lineFeed) {
+                        pos++;
+                    }
+                case CharacterCodes.lineFeed:
+                    pos++;
+                    if (stopAfterLineBreak) {
+                        return pos;
+                    }
+                    continue;
+                case CharacterCodes.tab:
+                case CharacterCodes.verticalTab:
+                case CharacterCodes.formFeed:
+                case CharacterCodes.space:
+                    pos++;
+                    continue;
+                case CharacterCodes.slash:
+                    if (text.charCodeAt(pos + 1) === CharacterCodes.slash) {
+                        pos += 2;
+                        while (pos < text.length) {
+                            if (isLineBreak(text.charCodeAt(pos))) {
+                                break;
+                            }
+                            pos++;
+                        }
+                        continue;
+                    }
+                    if (text.charCodeAt(pos + 1) === CharacterCodes.asterisk) {
+                        pos += 2;
+                        while (pos < text.length) {
+                            if (text.charCodeAt(pos) === CharacterCodes.asterisk && text.charCodeAt(pos + 1) === CharacterCodes.slash) {
+                                pos += 2;
+                                break;
+                            }
+                            pos++;
+                        }
+                        continue;
+                    }
+                    break;
 
-                  case CharacterCodes.lessThan:
-                  case CharacterCodes.equals:
-                  case CharacterCodes.greaterThan:
-                      if (isConflictMarkerTrivia(text, pos)) {
-                          pos = scanConflictMarkerTrivia(text, pos);
-                          continue;
-                      }
-                      break;
+                case CharacterCodes.lessThan:
+                case CharacterCodes.equals:
+                case CharacterCodes.greaterThan:
+                    if (isConflictMarkerTrivia(text, pos)) {
+                        pos = scanConflictMarkerTrivia(text, pos);
+                        continue;
+                    }
+                    break;
 
-                  case CharacterCodes.hash:
-                      if (pos === 0 && isShebangTrivia(text, pos)) {
-                          pos = scanShebangTrivia(text, pos);
-                          continue;
-                      }
-                      break;
+                case CharacterCodes.hash:
+                    if (pos === 0 && isShebangTrivia(text, pos)) {
+                        pos = scanShebangTrivia(text, pos);
+                        continue;
+                    }
+                    break;
 
-                  default:
-                      if (ch > CharacterCodes.maxAsciiCharacter && (isWhiteSpace(ch) || isLineBreak(ch))) {
-                          pos++;
-                          continue;
-                      }
-                      break;
-              }
-              return pos;
-          }
-      }
+                default:
+                    if (ch > CharacterCodes.maxAsciiCharacter && (isWhiteSpace(ch) || isLineBreak(ch))) {
+                        pos++;
+                        continue;
+                    }
+                    break;
+            }
+            return pos;
+        }
+    }
 
-      // All conflict markers consist of the same character repeated seven times.  If it is
-      // a <<<<<<< or >>>>>>> marker then it is also followed by a space.
+    // All conflict markers consist of the same character repeated seven times.  If it is
+    // a <<<<<<< or >>>>>>> marker then it is also followed by a space.
     const mergeConflictMarkerLength = "<<<<<<<".length;
 
     function isConflictMarkerTrivia(text: string, pos: number) {
@@ -744,6 +752,13 @@ namespace ts {
         let hasExtendedUnicodeEscape: boolean;
         let tokenIsUnterminated: boolean;
 
+        // Is the indentation using spaces or tabs
+        let indentCharCode: number;
+
+        // A stack of the indentation levels encountered so far
+        let indentLevels: number[] = [0];
+        let precedingIndentLevel: number = 0;
+
         setText(text, start, length);
 
         return {
@@ -774,6 +789,9 @@ namespace ts {
             tryScan,
             lookAhead,
             scanRange,
+            hasIndent,
+            parseIndent,
+            parseOutdent
         };
 
         function error(message: DiagnosticMessage, length?: number): void {
@@ -1155,11 +1173,39 @@ namespace ts {
             return value;
         }
 
+        function hasIndent(): boolean {
+            let prevIndentLevel = indentLevels[indentLevels.length - 1];
+            //log(`HASINDENT prevIndentLevel:${prevIndentLevel} currIndentLevel:${precedingIndentLevel}`);
+            return precedingIndentLevel > prevIndentLevel;
+        }
+
+        function parseIndent(): boolean {
+            let prevIndentLevel = indentLevels[indentLevels.length - 1];
+            Debug.assert(precedingIndentLevel > prevIndentLevel, "parseIndent() should be immediately called if hasIndent()");
+            indentLevels.push(precedingIndentLevel);
+            log("INDENT" + " " + JSON.stringify(indentLevels));
+            return true;
+        }
+
+        function parseOutdent(): boolean {
+            Debug.assert(indentLevels.length > 1 , "indent stack cannot be empty");
+            indentLevels.pop();
+            log("OUTDENT" + " " + JSON.stringify(indentLevels));
+            return true;
+        }
+
+        function log(msg: string) {
+            if (true) {
+                console.log(msg);
+            }
+        }
+
         function scan(): SyntaxKind {
             startPos = pos;
             hasExtendedUnicodeEscape = false;
             precedingLineBreak = false;
             tokenIsUnterminated = false;
+
             while (true) {
                 tokenPos = pos;
                 if (pos >= end) {
@@ -1200,6 +1246,24 @@ namespace ts {
                     case CharacterCodes.verticalTab:
                     case CharacterCodes.formFeed:
                     case CharacterCodes.space:
+                        // Indentation encountered
+                        if (pos === 0 || precedingLineBreak) {
+                            // Detect indentation type from first indent and use that for rest of the file
+                            if (!indentCharCode) {
+                                indentCharCode = text.charCodeAt(pos);
+                            } else if (indentCharCode != text.charCodeAt(pos)){
+                                error(Diagnostics.Indentation_character_mismatch_Can_t_have_both_tab_and_space_based_indentation_in_same_file);
+                            }
+
+                            // Compute the indent level
+                            for (precedingIndentLevel = 1; pos + 1 < end && text.charCodeAt(pos + 1) === indentCharCode; precedingIndentLevel++, pos++);
+                            if (precedingIndentLevel > indentLevels[indentLevels.length - 1]) {
+                                indentLevels.push(precedingIndentLevel);
+                                return token = SyntaxKind.IndentToken;
+                            }
+                            continue;
+
+                        }
                         if (skipTrivia) {
                             pos++;
                             continue;
@@ -1241,6 +1305,9 @@ namespace ts {
                         pos++;
                         return token = SyntaxKind.AmpersandToken;
                     case CharacterCodes.openParen:
+                        if (text.charCodeAt(pos + 1) === CharacterCodes.greaterThan) {
+                            return pos += 2, token = SyntaxKind.OpenParenArrowToken;
+                        }
                         pos++;
                         return token = SyntaxKind.OpenParenToken;
                     case CharacterCodes.closeParen:
@@ -1477,6 +1544,9 @@ namespace ts {
                         pos++;
                         return token = SyntaxKind.QuestionToken;
                     case CharacterCodes.openBracket:
+                        if (text.charCodeAt(pos + 1) === CharacterCodes.greaterThan) {
+                            return pos += 2, token = SyntaxKind.OpenBracketArrowToken;
+                        }
                         pos++;
                         return token = SyntaxKind.OpenBracketToken;
                     case CharacterCodes.closeBracket:
@@ -1489,6 +1559,9 @@ namespace ts {
                         pos++;
                         return token = SyntaxKind.CaretToken;
                     case CharacterCodes.openBrace:
+                        if (text.charCodeAt(pos + 1) === CharacterCodes.greaterThan) {
+                            return pos += 2, token = SyntaxKind.OpenBraceArrowToken;
+                        }
                         pos++;
                         return token = SyntaxKind.OpenBraceToken;
                     case CharacterCodes.bar:
