@@ -3087,7 +3087,7 @@ namespace ts {
         }
 
         function parseArrowFunctionExpressionBody(isAsync: boolean): Block | Expression {
-            if (token === SyntaxKind.OpenBraceToken) {
+            if (token === SyntaxKind.OpenBraceToken || token === SyntaxKind.IndentToken) {
                 return parseFunctionBlock(/*allowYield*/ false, /*allowAwait*/ isAsync, /*ignoreMissingOpenBrace*/ false);
             }
 
@@ -4194,14 +4194,17 @@ namespace ts {
             log(arguments.callee);
 
             const node = <Block>createNode(SyntaxKind.Block);
+
             if (token === SyntaxKind.IndentToken) {
                 parseExpected(SyntaxKind.IndentToken);
                 node.statements = parseList(ParsingContext.BlockStatements, parseStatement);
-                scanner.parseOutdent();
+                parseExpected(SyntaxKind.DedentToken);
             }
 
             else if (parseExpected(SyntaxKind.OpenBraceToken, diagnosticMessage) || ignoreMissingOpenBrace) {
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
                 node.statements = parseList(ParsingContext.BlockStatements, parseStatement);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
                 parseExpected(SyntaxKind.CloseBraceToken);
             }
             else {

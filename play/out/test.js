@@ -1,10 +1,21 @@
+var c = console;
 var f = function () {
     if (true) {
-        ;
-        .log("asdfasdfasdf");
-        ;
+        "asfasdf";
+        c.log("asdfasdfasdf");
+        "Asdf";
         return "whoop 			";
     }
+    while (true) {
+        c.log("asdf");
+    }
+    var help = function () {
+        return c.log("Usage: In v4 run tslint recursively");
+    };
+    c.log("> tslint -c tslint.json **/*.ts > tslintout.txt");
+    c.log("Then run the fixer");
+    c.log("> coffee tslintFixer.coffee tslintout.txt");
+    process.exit(0);
     // Ypescript
     /**
     # = this, @ is reserved for decorators

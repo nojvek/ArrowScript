@@ -52,11 +52,6 @@ namespace ts {
         // callback returns something truthy, then the scanner state is not rolled back.  The result
         // of invoking the callback is returned from this function.
         tryScan<T>(callback: () => T): T;
-
-        // Parser will ask scanner for indent and outdents rather than receive as tokens
-        hasIndent(): boolean;
-        parseIndent(): boolean;
-        parseOutdent(): boolean;
     }
 
     const textToToken: Map<SyntaxKind> = {
@@ -757,7 +752,6 @@ namespace ts {
 
         // A stack of the indentation levels encountered so far
         let indentLevels: number[] = [0];
-        let precedingIndentLevel: number = 0;
 
         setText(text, start, length);
 
@@ -788,10 +782,7 @@ namespace ts {
             setTextPos,
             tryScan,
             lookAhead,
-            scanRange,
-            hasIndent,
-            parseIndent,
-            parseOutdent
+            scanRange
         };
 
         function error(message: DiagnosticMessage, length?: number): void {
@@ -1173,27 +1164,6 @@ namespace ts {
             return value;
         }
 
-        function hasIndent(): boolean {
-            let prevIndentLevel = indentLevels[indentLevels.length - 1];
-            //log(`HASINDENT prevIndentLevel:${prevIndentLevel} currIndentLevel:${precedingIndentLevel}`);
-            return precedingIndentLevel > prevIndentLevel;
-        }
-
-        function parseIndent(): boolean {
-            let prevIndentLevel = indentLevels[indentLevels.length - 1];
-            Debug.assert(precedingIndentLevel > prevIndentLevel, "parseIndent() should be immediately called if hasIndent()");
-            indentLevels.push(precedingIndentLevel);
-            log("INDENT" + " " + JSON.stringify(indentLevels));
-            return true;
-        }
-
-        function parseOutdent(): boolean {
-            Debug.assert(indentLevels.length > 1 , "indent stack cannot be empty");
-            indentLevels.pop();
-            log("OUTDENT" + " " + JSON.stringify(indentLevels));
-            return true;
-        }
-
         function log(msg: string) {
             if (true) {
                 console.log(msg);
@@ -1205,6 +1175,7 @@ namespace ts {
             hasExtendedUnicodeEscape = false;
             precedingLineBreak = false;
             tokenIsUnterminated = false;
+            let prevIndentLevel = indentLevels[indentLevels.length - 1]
 
             while (true) {
                 tokenPos = pos;
@@ -1255,12 +1226,29 @@ namespace ts {
                                 error(Diagnostics.Indentation_character_mismatch_Can_t_have_both_tab_and_space_based_indentation_in_same_file);
                             }
 
-                            // Compute the indent level
-                            for (precedingIndentLevel = 1; pos + 1 < end && text.charCodeAt(pos + 1) === indentCharCode; precedingIndentLevel++, pos++);
-                            if (precedingIndentLevel > indentLevels[indentLevels.length - 1]) {
-                                indentLevels.push(precedingIndentLevel);
+                            // Compute the indent level by scanning until a non-whitespace character
+                            let curIndentLevel = 1;
+                            let prevIndentLevel = indentLevels[indentLevels.length - 1];
+                            while ((pos  + curIndentLevel) < end && text.charCodeAt(pos + curIndentLevel) === indentCharCode)
+                                 curIndentLevel++;
+
+                            if (curIndentLevel === prevIndentLevel) {
+                                // No indentation change, keep calm and move on
+                                pos+= curIndentLevel;
+                            }
+                            else if (curIndentLevel > prevIndentLevel) {
+                                indentLevels.push(curIndentLevel);
+                                pos += curIndentLevel;
+                                if (indentLevels.length == 2) {
+                                    continue;
+                                }
                                 return token = SyntaxKind.IndentToken;
                             }
+                            else if (curIndentLevel < prevIndentLevel) {
+                                indentLevels.pop();
+                                return token = SyntaxKind.DedentToken;
+                            }
+
                             continue;
 
                         }
