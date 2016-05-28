@@ -641,7 +641,6 @@ namespace ts {
             }
         }
 
-
         function addJSDocComment<T extends Node>(node: T): T {
             if (contextFlags & NodeFlags.JavaScriptFile) {
                 const comments = getLeadingCommentRangesOfNode(node, sourceFile);

@@ -1164,6 +1164,10 @@ namespace ts {
             return value;
         }
 
+        function tryIndentOrDedent(): SyntaxKind {
+
+        }
+
         function log(msg: string) {
             if (true) {
                 console.log(msg);
