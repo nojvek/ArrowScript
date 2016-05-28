@@ -748,7 +748,7 @@ namespace ts {
         let tokenIsUnterminated: boolean;
 
         // Is the indentation using spaces or tabs
-        let indentCharCode: number;
+        let indentChar: string;
 
         // A stack of the indentation levels encountered so far
         let indentLevels: number[] = [0];
@@ -1164,8 +1164,43 @@ namespace ts {
             return value;
         }
 
-        function tryIndentOrDedent(): SyntaxKind {
+        function scanForIndentChanges(): SyntaxKind {
+            let prevIndentLevel = indentLevels[indentLevels.length - 1];
+            let curIndentLevel = 0;
+            let char: string = null;
 
+            // Scan through multiple newlines if encountered
+            while (text.charAt(pos).match(/\r|\n/)) {
+                pos++;
+            }
+
+            // Peek ahead to calculate indent
+            while ((char = text.charAt(pos + curIndentLevel)).match(/\t| /)) {
+                // Detect indentation type from first indent and use that for rest of the file
+                if (!indentChar) {
+                    indentChar = char;
+                } else if (indentChar != char){
+                    error(Diagnostics.Indentation_character_mismatch_Can_t_have_both_tab_and_space_based_indentation_in_same_file);
+                }
+
+                curIndentLevel++;
+            }
+
+            if (curIndentLevel === prevIndentLevel) {
+                // No indentation change, keep calm and move on
+                pos+= curIndentLevel;
+                return null;
+            }
+            else if (curIndentLevel > prevIndentLevel) {
+                indentLevels.push(curIndentLevel);
+                pos += curIndentLevel;
+                return token = SyntaxKind.IndentToken;
+            }
+            else if (curIndentLevel < prevIndentLevel) {
+                indentLevels.pop();
+                pos--; // backtrack, there could be more dedents
+                return token = SyntaxKind.DedentToken;
+            }
         }
 
         function log(msg: string) {
@@ -1179,11 +1214,11 @@ namespace ts {
             hasExtendedUnicodeEscape = false;
             precedingLineBreak = false;
             tokenIsUnterminated = false;
-            let prevIndentLevel = indentLevels[indentLevels.length - 1]
 
             while (true) {
                 tokenPos = pos;
                 if (pos >= end) {
+                    //return scanForIndentChanges();
                     return token = SyntaxKind.EndOfFileToken;
                 }
                 let ch = text.charCodeAt(pos);
@@ -1204,8 +1239,11 @@ namespace ts {
                     case CharacterCodes.carriageReturn:
                         precedingLineBreak = true;
                         if (skipTrivia) {
-                            pos++;
-                            continue;
+                            token = scanForIndentChanges();
+                            if (token)
+                                return token;
+                            else
+                                continue;
                         }
                         else {
                             if (ch === CharacterCodes.carriageReturn && pos + 1 < end && text.charCodeAt(pos + 1) === CharacterCodes.lineFeed) {
@@ -1221,41 +1259,6 @@ namespace ts {
                     case CharacterCodes.verticalTab:
                     case CharacterCodes.formFeed:
                     case CharacterCodes.space:
-                        // Indentation encountered
-                        if (pos === 0 || precedingLineBreak) {
-                            // Detect indentation type from first indent and use that for rest of the file
-                            if (!indentCharCode) {
-                                indentCharCode = text.charCodeAt(pos);
-                            } else if (indentCharCode != text.charCodeAt(pos)){
-                                error(Diagnostics.Indentation_character_mismatch_Can_t_have_both_tab_and_space_based_indentation_in_same_file);
-                            }
-
-                            // Compute the indent level by scanning until a non-whitespace character
-                            let curIndentLevel = 1;
-                            let prevIndentLevel = indentLevels[indentLevels.length - 1];
-                            while ((pos  + curIndentLevel) < end && text.charCodeAt(pos + curIndentLevel) === indentCharCode)
-                                 curIndentLevel++;
-
-                            if (curIndentLevel === prevIndentLevel) {
-                                // No indentation change, keep calm and move on
-                                pos+= curIndentLevel;
-                            }
-                            else if (curIndentLevel > prevIndentLevel) {
-                                indentLevels.push(curIndentLevel);
-                                pos += curIndentLevel;
-                                if (indentLevels.length == 2) {
-                                    continue;
-                                }
-                                return token = SyntaxKind.IndentToken;
-                            }
-                            else if (curIndentLevel < prevIndentLevel) {
-                                indentLevels.pop();
-                                return token = SyntaxKind.DedentToken;
-                            }
-
-                            continue;
-
-                        }
                         if (skipTrivia) {
                             pos++;
                             continue;

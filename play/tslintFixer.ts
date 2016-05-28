@@ -68,14 +68,14 @@ let fixMultiLineIssue = (fileLines, issue, lineNum, tslintLine) ->
             endLineNum += 1
 
         // ensure that there are more than one blank lines before doing the splice
-        if (endLineNum - lineNum) >= 1
-            c.log "\n", tslintLine
-            c.log fileLines.slice(lineNum - 2, endLineNum + 1).join("\n")
+        if ((endLineNum - lineNum) >= 1)
+            c.log("\n", tslintLine)
+            c.log(fileLines.slice(lineNum - 2, endLineNum + 1).join("\n"))
             fileLines.splice(lineNum, endLineNum - lineNum)
-            c.log "\t\t\t^^^ Before ^^^ | vvv After vvv"
-            c.log fileLines.slice(lineNum - 2, lineNum + 1).join("\n")
+            c.log("\t\t\t^^^ Before ^^^ | vvv After vvv")
+            c.log(fileLines.slice(lineNum - 2, lineNum + 1).join("\n"))
 
-    return fileLines
+    -< fileLines
 
 const processTslintOutput = (tslintOutFile) ->
     issueMap = {}
@@ -84,20 +84,24 @@ const processTslintOutput = (tslintOutFile) ->
     // group isues by filePath and lineNum
     for tslintLine in tslintLines
         matches = tslintLine.match(/^(.*\.ts)\[(\d+), (\d+)\]: (.*)/)
-        if not matches then throw new Error("Unrecognized line: " + tslintLine)
+        if not matches
+            throw new Error("Unrecognized line: " + tslintLine)
         [_, filePath, lineNum, colNum, issue] = matches
-        lineNum = parseInt(lineNum) - 1 # -1 for array index access
+        lineNum = parseInt(lineNum) - 1 // -1 for array index access
         colNum = parseInt(colNum) - 1
 
-        if not issueMap[filePath] then issueMap[filePath] = {}
-        if not issueMap[filePath][lineNum] then issueMap[filePath][lineNum] = []
-        issueMap[filePath][lineNum].push(colNum: colNum, issue: issue, tslintLine: tslintLine)
+        if not issueMap[filePath]
+            issueMap[filePath] = {}
+        if not issueMap[filePath][lineNum]
+            issueMap[filePath][lineNum] = []
+
+        issueMap[filePath][lineNum].push({colNum: colNum, issue: issue, tslintLine: tslintLine})
 
     // for each file, reverse-sort issues by lineNum and then by colNum
     for filePath, issueLines of issueMap
         fileEdited = false
         fileLines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/)
-        lineNums = Object.keys(issueLines).map((x) -> parseInt(x)).sort().reverse()
+        lineNums = Object.keys(issueLines).map(x -> parseInt(x)).sort().reverse()
 
         for lineNum in lineNums
             lineEdited = false
@@ -108,7 +112,8 @@ const processTslintOutput = (tslintOutFile) ->
             // reverse sorted edits are safe because we only make edits after an index
             for issue in issues
                 lineAfter = fixSingleLineIssue(lineAfter, issue.issue, issue.colNum, issue.tslintLine)
-                if lineBefore isnt lineAfter then lineEdited = true
+                if lineBefore isnt lineAfter
+                    lineEdited = true
 
             // print before/after for every edited line
             if lineEdited
@@ -120,7 +125,8 @@ const processTslintOutput = (tslintOutFile) ->
             if issues.length == 1 and issues[0].issue is "consecutive blank lines are disallowed"
                 numLinesBefore = fileLines.length
                 fileLines = fixMultiLineIssue(fileLines, issues[0].issue, lineNum, issues[0].tslintLine)
-                if numLinesBefore isnt fileLines.length then fileEdited = true
+                if numLinesBefore isnt fileLines.length
+                    fileEdited = true
 
         // if file is not writable, mark for edit and save
         if fileEdited
@@ -136,3 +142,4 @@ const processTslintOutput = (tslintOutFile) ->
 // ### main ###
 if (process.argv.length < 3) help()
 processTslintOutput(process.argv[2])
+
