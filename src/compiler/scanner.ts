@@ -1238,8 +1238,11 @@ namespace ts {
                     case CharacterCodes.lineFeed:
                     case CharacterCodes.carriageReturn:
                         precedingLineBreak = true;
+
                         if (skipTrivia) {
+                            startPos = pos;
                             token = scanForIndentChanges();
+
                             if (token)
                                 return token;
                             else

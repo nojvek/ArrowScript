@@ -2,6 +2,9 @@
  * tslintFixer parses the output of tslint and automatically fixes the issues
  */
 
+declare var require: any;
+declare var process: any;
+
 const fs = require('fs')
 const execSync = require('child_process').execSync
 const c = console
@@ -48,13 +51,13 @@ const fixSingleLineIssue = (line, issue, colNum, tslintLine) ->
             line = line.substr(0, colNum) + line.substr(colNum + 1)
 
     else if (matches = issue.match(/^(==|!=) should be (===|!==)$/))
-        [_, findStr, replaceStr] = matches
+        let [_, findStr, replaceStr] = matches
         if line.substr(colNum, findStr.length) == findStr
             line = line.substr(0, colNum) + replaceStr + line.substr(colNum + findStr.length)
 
     else if (matches = issue is "' should be \"")
         if line[colNum] is "'"
-            endIndex = line.indexOf("'", colNum + 1)
+            let endIndex = line.indexOf("'", colNum + 1)
             line = line.substr(0, colNum) + '"' + line.substr(colNum + 1)
             line = line.substr(0, endIndex) + '"' + line.substr(endIndex + 1)
 
@@ -63,7 +66,7 @@ const fixSingleLineIssue = (line, issue, colNum, tslintLine) ->
 let fixMultiLineIssue = (fileLines, issue, lineNum, tslintLine) ->
     if issue is "consecutive blank lines are disallowed"
         // loop to find all consecutive blank lines
-        endLineNum = lineNum
+        let endLineNum = lineNum
         while endLineNum < fileLines.length and fileLines[endLineNum].match(/^\s*$/)
             endLineNum += 1
 
@@ -78,15 +81,15 @@ let fixMultiLineIssue = (fileLines, issue, lineNum, tslintLine) ->
     -< fileLines
 
 const processTslintOutput = (tslintOutFile) ->
-    issueMap = {}
-    tslintLines = fs.readFileSync(tslintOutFile, "utf-8").trim().split("\n")
+    let issueMap = {}
+    let tslintLines = fs.readFileSync(tslintOutFile, "utf-8").trim().split("\n")
 
     // group isues by filePath and lineNum
-    for tslintLine in tslintLines
-        matches = tslintLine.match(/^(.*\.ts)\[(\d+), (\d+)\]: (.*)/)
+    for let tslintLine of tslintLines
+        let matches = tslintLine.match(/^(.*\.ts)\[(\d+), (\d+)\]: (.*)/)
         if not matches
             throw new Error("Unrecognized line: " + tslintLine)
-        [_, filePath, lineNum, colNum, issue] = matches
+        let [_, filePath, lineNum, colNum, issue] = matches
         lineNum = parseInt(lineNum) - 1 // -1 for array index access
         colNum = parseInt(colNum) - 1
 
@@ -98,32 +101,33 @@ const processTslintOutput = (tslintOutFile) ->
         issueMap[filePath][lineNum].push({colNum: colNum, issue: issue, tslintLine: tslintLine})
 
     // for each file, reverse-sort issues by lineNum and then by colNum
-    for filePath, issueLines of issueMap
-        fileEdited = false
-        fileLines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/)
-        lineNums = Object.keys(issueLines).map(x -> parseInt(x)).sort().reverse()
+    for let filePath in issueMap
+        let issueLines = issueMap[filePath]
+        let fileEdited = false
+        let fileLines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/)
+        let lineNums = Object.keys(issueLines).map(x -> parseInt(x)).sort().reverse()
 
-        for lineNum in lineNums
-            lineEdited = false
-            lineBefore = lineAfter = fileLines[lineNum]
-            issues = issueLines[lineNum]
+        for let lineNum of lineNums
+            let lineEdited = false
+            let lineBefore = fileLines[lineNum], lineAfter = lineBefore
+            let issues = issueLines[lineNum]
             issues.sort((a,b) -> b.colNum - a.colNum)
 
             // reverse sorted edits are safe because we only make edits after an index
-            for issue in issues
+            for let issue of issues
                 lineAfter = fixSingleLineIssue(lineAfter, issue.issue, issue.colNum, issue.tslintLine)
                 if lineBefore isnt lineAfter
                     lineEdited = true
 
-            // print before/after for every edited line
-            if lineEdited
-                fileEdited = true
-                fileLines[lineNum] = lineAfter
-                c.log("\n", issue.tslintLine, "\nBefore: ", lineBefore.trim(), "\nAfter:  ", lineAfter.trim())
+                // print before/after for every edited line
+                if lineEdited
+                    fileEdited = true
+                    fileLines[lineNum] = lineAfter
+                    c.log("\n", issue.tslintLine, "\nBefore: ", lineBefore.trim(), "\nAfter:  ", lineAfter.trim())
 
             // multiline issues change line numbers so we only apply if they are the only issue
             if issues.length == 1 and issues[0].issue is "consecutive blank lines are disallowed"
-                numLinesBefore = fileLines.length
+                let numLinesBefore = fileLines.length
                 fileLines = fixMultiLineIssue(fileLines, issues[0].issue, lineNum, issues[0].tslintLine)
                 if numLinesBefore isnt fileLines.length
                     fileEdited = true
@@ -135,7 +139,7 @@ const processTslintOutput = (tslintOutFile) ->
             catch e
                 exec( "sd edit #{filePath}")
 
-            contents = fileLines.join("\r\n") // windows format
+            let contents = fileLines.join("\r\n") // windows format
             fs.writeFileSync(filePath, contents, 'utf-8')
 
 

@@ -630,7 +630,7 @@ namespace ts {
                 return val;
             }
 
-            //log(JSON.stringify(sourceFile.statements, replacer, '  '))
+            log(JSON.stringify(sourceFile.statements, replacer, '  '))
 
             return sourceFile;
         }
@@ -848,7 +848,7 @@ namespace ts {
 
         function nextToken(): SyntaxKind {
             token = scanner.scan();
-            //log((<any>ts).SyntaxKind[token] + " " + scanner.getTokenText());
+            log((<any>ts).SyntaxKind[token] + " " + scanner.getTokenText());
             return token;
         }
 
@@ -1311,7 +1311,7 @@ namespace ts {
         // True if positioned at a list terminator
         function isListTerminator(kind: ParsingContext): boolean {
             if (token === SyntaxKind.EndOfFileToken || token === SyntaxKind.DedentToken) {
-                // Being at the end of the file ends all lists.
+                // Being at the end of the file or dedenting ends all lists.
                 return true;
             }
 
@@ -1773,7 +1773,9 @@ namespace ts {
 
                     // We didn't get a comma, and the list wasn't terminated, explicitly parse
                     // out a comma so we give a good error message.
-                    parseExpected(SyntaxKind.CommaToken);
+                    if (!scanner.hasPrecedingLineBreak()) {
+                        parseExpected(SyntaxKind.CommaToken);
+                    }
 
                     // If the token was a semicolon, and the caller allows that, then skip it and
                     // continue.  This ensures we get back on track and don't result in tons of
@@ -2336,7 +2338,7 @@ namespace ts {
 
         function parseTypeLiteral(): TypeLiteralNode {
             const node = <TypeLiteralNode>createNode(SyntaxKind.TypeLiteral);
-            node.members = parseIndentableBlock(() => parseList(ParsingContext.TypeMembers, parseTypeMember));
+            node.members = parseIndentableCurlyBlock(() => parseList(ParsingContext.TypeMembers, parseTypeMember));
             return finishNode(node);
         }
 
@@ -3983,10 +3985,14 @@ namespace ts {
                 case SyntaxKind.FalseKeyword:
                     return parseTokenNode<PrimaryExpression>();
                 case SyntaxKind.OpenParenToken:
+                case SyntaxKind.OpenParenArrowToken:
                     return parseParenthesizedExpression();
                 case SyntaxKind.OpenBracketToken:
+                case SyntaxKind.OpenBracketArrowToken:
                     return parseArrayLiteralExpression();
                 case SyntaxKind.OpenBraceToken:
+                case SyntaxKind.OpenBraceArrowToken:
+                case SyntaxKind.IndentToken:
                     return parseObjectLiteralExpression();
                 case SyntaxKind.AsyncKeyword:
                     // Async arrow functions are parsed earlier in parseAssignmentExpressionOrHigher.
@@ -4115,13 +4121,24 @@ namespace ts {
 
         function parseObjectLiteralExpression(): ObjectLiteralExpression {
             const node = <ObjectLiteralExpression>createNode(SyntaxKind.ObjectLiteralExpression);
-            parseExpected(SyntaxKind.OpenBraceToken);
-            if (scanner.hasPrecedingLineBreak()) {
+            if (token === SyntaxKind.IndentToken) {
+                parseExpected(SyntaxKind.IndentToken);
                 node.multiLine = true;
+                node.properties = parseDelimitedList(ParsingContext.ObjectLiteralMembers, parseObjectLiteralElement, /*considerSemicolonAsDelimiter*/ true);
+                parseExpected(SyntaxKind.DedentToken);
+            }
+            else if (parseExpected(SyntaxKind.OpenBraceToken)) {
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
+
+                if (scanner.hasPrecedingLineBreak()) {
+                    node.multiLine = true;
+                }
+
+                node.properties = parseDelimitedList(ParsingContext.ObjectLiteralMembers, parseObjectLiteralElement, /*considerSemicolonAsDelimiter*/ true);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
+                parseExpected(SyntaxKind.CloseBraceToken);
             }
 
-            node.properties = parseDelimitedList(ParsingContext.ObjectLiteralMembers, parseObjectLiteralElement, /*considerSemicolonAsDelimiter*/ true);
-            parseExpected(SyntaxKind.CloseBraceToken);
             return finishNode(node);
         }
 
@@ -4175,7 +4192,7 @@ namespace ts {
             return finishNode(node);
         }
 
-        function parseIndentableBlock<T>(parseStatementsWorker: () => NodeArray<T>): NodeArray<T> {
+        function parseIndentableCurlyBlock<T>(parseStatementsWorker: () => NodeArray<T>): NodeArray<T> {
             let statements: NodeArray<T>;
 
             if (token === SyntaxKind.IndentToken) {
@@ -4198,7 +4215,7 @@ namespace ts {
         // STATEMENTS
         function parseBlock(ignoreMissingOpenBrace: boolean, diagnosticMessage?: DiagnosticMessage): Block {
             const node = <Block>createNode(SyntaxKind.Block);
-            node.statements = parseIndentableBlock(() => parseList(ParsingContext.BlockStatements, parseStatement));
+            node.statements = parseIndentableCurlyBlock(() => parseList(ParsingContext.BlockStatements, parseStatement));
             return finishNode(node);
         }
 
@@ -4637,6 +4654,8 @@ namespace ts {
         }
 
         function parseStatement(): Statement {
+            log (arguments.callee);
+
             switch (token) {
                 case SyntaxKind.SemicolonToken:
                     return parseEmptyStatement();
@@ -5221,7 +5240,7 @@ namespace ts {
 
             // ClassTail[Yield,Await] : (Modified) See 14.5
             //      ClassHeritage[?Yield,?Await]opt { ClassBody[?Yield,?Await]opt }
-            parseIndentableBlock(() =>  parseList(ParsingContext.ClassMembers, parseClassElement));
+            parseIndentableCurlyBlock(() =>  parseList(ParsingContext.ClassMembers, parseClassElement));
             return finishNode(node);
         }
 
@@ -5285,7 +5304,7 @@ namespace ts {
             node.name = parseIdentifier();
             node.typeParameters = parseTypeParameters();
             node.heritageClauses = parseHeritageClauses(/*isClassHeritageClause*/ false);
-            node.members = parseIndentableBlock(() => parseList(ParsingContext.TypeMembers, parseTypeMember));
+            node.members = parseIndentableCurlyBlock(() => parseList(ParsingContext.TypeMembers, parseTypeMember));
             return finishNode(node);
         }
 
@@ -5319,13 +5338,13 @@ namespace ts {
             setModifiers(node, modifiers);
             parseExpected(SyntaxKind.EnumKeyword);
             node.name = parseIdentifier();
-            node.members = parseIndentableBlock(() => parseDelimitedList(ParsingContext.EnumMembers, parseEnumMember));
+            node.members = parseIndentableCurlyBlock(() => parseDelimitedList(ParsingContext.EnumMembers, parseEnumMember));
             return finishNode(node);
         }
 
         function parseModuleBlock(): ModuleBlock {
             const node = <ModuleBlock>createNode(SyntaxKind.ModuleBlock, scanner.getStartPos());
-            node.statements = parseIndentableBlock(() => parseList(ParsingContext.BlockStatements, parseStatement));
+            node.statements = parseIndentableCurlyBlock(() => parseList(ParsingContext.BlockStatements, parseStatement));
             return finishNode(node);
         }
 
