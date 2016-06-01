@@ -1891,10 +1891,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
                     // If we are not doing a downlevel transformation for object literals,
                     // then try to preserve the original shape of the object literal.
                     // Otherwise just try to preserve the formatting.
-                    if (numElements === properties.length) {
-                        emitLinePreservingList(node, properties, /*allowTrailingComma*/ languageVersion >= ScriptTarget.ES5, /*spacesBetweenBraces*/ true);
-                    }
-                    else {
+                    // if (numElements === properties.length) {
+                    //     emitLinePreservingList(node, properties, /*allowTrailingComma*/ languageVersion >= ScriptTarget.ES5, /*spacesBetweenBraces*/ true);
+                    // }
+                    // else {
                         const multiLine = node.multiLine;
                         if (!multiLine) {
                             write(" ");
@@ -1911,7 +1911,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
                         else {
                             decreaseIndent();
                         }
-                    }
+                    //}
                 }
 
                 write("}");
@@ -5410,7 +5410,7 @@ const _super = (function (geti, seti) {
                         //
 
                         // NOTE: we reuse the same rewriting logic for cases when targeting ES6 and module kind is System.
-                        // Because of hoisting top level class declaration need to be emitted as class expressions. 
+                        // Because of hoisting top level class declaration need to be emitted as class expressions.
                         // Double bind case is only required if node is decorated.
                         if (isDecorated && resolver.getNodeCheckFlags(node) & NodeCheckFlags.ClassWithBodyScopedClassBinding) {
                             decoratedClassAlias = unescapeIdentifier(makeUniqueName(node.name ? node.name.text : "default"));

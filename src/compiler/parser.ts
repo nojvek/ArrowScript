@@ -630,14 +630,14 @@ namespace ts {
                 return val;
             }
 
-            //log(JSON.stringify(sourceFile.statements, replacer, '  '))
+            log(JSON.stringify(sourceFile.statements, replacer, '  '))
 
             return sourceFile;
         }
 
         function log(msg: any) {
             if (!sourceFile.fileName.match(/\.d\.ts$/)) {
-                //console.log(msg);
+                console.log(msg);
             }
         }
 
