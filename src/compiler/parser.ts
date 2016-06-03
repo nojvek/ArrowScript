@@ -630,14 +630,14 @@ namespace ts {
                 return val;
             }
 
-            log(JSON.stringify(sourceFile.statements, replacer, '  '))
+            //log(JSON.stringify(sourceFile.statements, replacer, '  '))
 
             return sourceFile;
         }
 
         function log(msg: any) {
             if (!sourceFile.fileName.match(/\.d\.ts$/)) {
-                console.log(msg);
+                //console.log(msg);
             }
         }
 
@@ -4055,6 +4055,7 @@ namespace ts {
             }
             node.elements = parseDelimitedList(ParsingContext.ArrayLiteralMembers, parseArgumentOrArrayLiteralElement);
             parseExpected(SyntaxKind.CloseBracketToken);
+            parseIndentableLiteralExpression(node, ParsingContext.ArrayLiteralMembers, parseArgumentOrArrayLiteralElement, SyntaxKind.OpenBracketToken, SyntaxKind.OpenBracketArrowToken, SyntaxKind.CloseBracketToken);
             return finishNode(node);
         }
 
@@ -4127,16 +4128,20 @@ namespace ts {
                 node.properties = parseDelimitedList(ParsingContext.ObjectLiteralMembers, parseObjectLiteralElement, /*considerSemicolonAsDelimiter*/ true);
                 parseExpected(SyntaxKind.DedentToken);
             }
-            else if (parseExpected(SyntaxKind.OpenBraceToken)) {
+            else if (token === SyntaxKind.OpenBraceToken) {
+                parseExpected(SyntaxKind.OpenBraceToken)
                 let hasIndent = parseOptional(SyntaxKind.IndentToken);
-
-                if (scanner.hasPrecedingLineBreak()) {
-                    node.multiLine = true;
-                }
-
+                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
                 node.properties = parseDelimitedList(ParsingContext.ObjectLiteralMembers, parseObjectLiteralElement, /*considerSemicolonAsDelimiter*/ true);
                 hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
                 parseExpected(SyntaxKind.CloseBraceToken);
+            } // TODO needs some work on open brace definition
+            else if (token === SyntaxKind.OpenBraceArrowToken) {
+                parseExpected(SyntaxKind.OpenBraceArrowToken)
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
+                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
+                node.properties = parseDelimitedList(ParsingContext.ObjectLiteralMembers, parseObjectLiteralElement, /*considerSemicolonAsDelimiter*/ true);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
             }
 
             return finishNode(node);
@@ -4210,6 +4215,29 @@ namespace ts {
                 statements = createMissingList<T>();
             }
             return statements;
+        }
+
+        function parseIndentableLiteralExpression<T extends Node>(parsingContext: ParsingContext, parseElement: () => T, openToken: SyntaxKind, openArrowToken: SyntaxKind, closeToken:SyntaxKind): {multiLine: boolean, elements: NodeArray<T>} {
+            let multiLine: boolean;
+            let elements: NodeArray<T>;
+
+            if (token === openToken) {
+                parseExpected(openToken)
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
+                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
+                node.properties = parseDelimitedList(parsingContext, parseElement, /*considerSemicolonAsDelimiter*/ true);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
+                parseExpected(closeToken);
+            } // TODO needs some work on open brace definition
+            else if (token === openArrowToken) {
+                parseExpected(openArrowToken)
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
+                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
+                node.properties = parseDelimitedList(parsingContext, parseElement, /*considerSemicolonAsDelimiter*/ true);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
+            }
+
+            return {multiLine, elements};
         }
 
         // STATEMENTS

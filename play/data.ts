@@ -1,25 +1,25 @@
 let data =
-    profile:
-        coverPic: 'assets/sunflowers.jpg'
-        profilePic: 'assets/profile_pic.jpg'
-        name: 'Noj Vek'
+    profile: {>
+        coverPic: 'assets/sunflowers.jpg',
+        profilePic: 'assets/profile_pic.jpg',
+        name: 'Noj Vek',
         blurb: 'I hand craft aesthetic applications'
 
-//     experiences: [>
-//         {>
-//             companyName: 'Microsoft'
-//             companyUrl: 'http://microsoft.com'
-//             companyLogo: 'assets/microsoft_logo.png'
-//             position: 'Software Engineer'
-//             location: 'Vancouver, Canada & Seattle, United States'
-//             duration: 'May 2010 - Present'
-//             projects: [>
-//                 {>
-//                     video_url: '3Av_I7UZrTY'
-//                     desc: [>
-//                         'Working with Microsoft Power BI (Business Intelligence) team to develop the next generation of toolset for Big Data and Analytics.'
-//                         'Developed authoring features and report editor. Worked on build systems and got a good grasp of how software with millions of lines of code is managed.'
-//                         'Technologies: Typescript / CSS3 / HTML5 for frontend and C++ on the backend. '
+    experiences: [>
+        {>
+            companyName: 'Microsoft'
+            companyUrl: 'http://microsoft.com'
+            companyLogo: 'assets/microsoft_logo.png'
+            position: 'Software Engineer'
+            location: 'Vancouver, Canada & Seattle, United States'
+            duration: 'May 2010 - Present'
+            projects: [>
+                {>
+                    video_url: '3Av_I7UZrTY'
+                    desc: [>
+                        'Working with Microsoft Power BI (Business Intelligence) team to develop the next generation of toolset for Big Data and Analytics.'
+                        'Developed authoring features and report editor. Worked on build systems and got a good grasp of how software with millions of lines of code is managed.'
+                        'Technologies: Typescript / CSS3 / HTML5 for frontend and C++ on the backend. '
 
 //         {>
 //             companyName: 'Rocketboots'
