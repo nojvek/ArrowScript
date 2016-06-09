@@ -630,14 +630,14 @@ namespace ts {
                 return val;
             }
 
-            //log(JSON.stringify(sourceFile.statements, replacer, '  '))
+            log(JSON.stringify(sourceFile.statements, replacer, '  '))
 
             return sourceFile;
         }
 
         function log(msg: any) {
             if (!sourceFile.fileName.match(/\.d\.ts$/)) {
-                //console.log(msg);
+                console.log(msg);
             }
         }
 
@@ -2584,8 +2584,11 @@ namespace ts {
                 case SyntaxKind.NoSubstitutionTemplateLiteral:
                 case SyntaxKind.TemplateHead:
                 case SyntaxKind.OpenParenToken:
+                case SyntaxKind.OpenParenArrowToken:
                 case SyntaxKind.OpenBracketToken:
+                case SyntaxKind.OpenBracketArrowToken:
                 case SyntaxKind.OpenBraceToken:
+                case SyntaxKind.OpenBraceArrowToken:
                 case SyntaxKind.FunctionKeyword:
                 case SyntaxKind.ClassKeyword:
                 case SyntaxKind.NewKeyword:
@@ -4049,13 +4052,23 @@ namespace ts {
 
         function parseArrayLiteralExpression(): ArrayLiteralExpression {
             const node = <ArrayLiteralExpression>createNode(SyntaxKind.ArrayLiteralExpression);
-            parseExpected(SyntaxKind.OpenBracketToken);
-            if (scanner.hasPrecedingLineBreak()) {
-                node.multiLine = true;
+
+            if (token === SyntaxKind.OpenBracketToken) {
+                parseExpected(SyntaxKind.OpenBracketToken)
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
+                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
+                node.elements = parseDelimitedList(ParsingContext.ArrayLiteralMembers, parseArgumentOrArrayLiteralElement, /*considerSemicolonAsDelimiter*/ true);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
+                parseExpected(SyntaxKind.CloseBracketToken);
+            } // TODO needs some work on open brace definition
+            else if (token === SyntaxKind.OpenBracketArrowToken) {
+                parseExpected(SyntaxKind.OpenBracketArrowToken)
+                let hasIndent = parseOptional(SyntaxKind.IndentToken);
+                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
+                node.elements = parseDelimitedList(ParsingContext.ArrayLiteralMembers, parseArgumentOrArrayLiteralElement, /*considerSemicolonAsDelimiter*/ true);
+                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
             }
-            node.elements = parseDelimitedList(ParsingContext.ArrayLiteralMembers, parseArgumentOrArrayLiteralElement);
-            parseExpected(SyntaxKind.CloseBracketToken);
-            parseIndentableLiteralExpression(node, ParsingContext.ArrayLiteralMembers, parseArgumentOrArrayLiteralElement, SyntaxKind.OpenBracketToken, SyntaxKind.OpenBracketArrowToken, SyntaxKind.CloseBracketToken);
+
             return finishNode(node);
         }
 
@@ -4215,29 +4228,6 @@ namespace ts {
                 statements = createMissingList<T>();
             }
             return statements;
-        }
-
-        function parseIndentableLiteralExpression<T extends Node>(parsingContext: ParsingContext, parseElement: () => T, openToken: SyntaxKind, openArrowToken: SyntaxKind, closeToken:SyntaxKind): {multiLine: boolean, elements: NodeArray<T>} {
-            let multiLine: boolean;
-            let elements: NodeArray<T>;
-
-            if (token === openToken) {
-                parseExpected(openToken)
-                let hasIndent = parseOptional(SyntaxKind.IndentToken);
-                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
-                node.properties = parseDelimitedList(parsingContext, parseElement, /*considerSemicolonAsDelimiter*/ true);
-                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
-                parseExpected(closeToken);
-            } // TODO needs some work on open brace definition
-            else if (token === openArrowToken) {
-                parseExpected(openArrowToken)
-                let hasIndent = parseOptional(SyntaxKind.IndentToken);
-                node.multiLine = scanner.hasPrecedingLineBreak() || hasIndent;
-                node.properties = parseDelimitedList(parsingContext, parseElement, /*considerSemicolonAsDelimiter*/ true);
-                hasIndent ? parseExpected(SyntaxKind.DedentToken) : undefined;
-            }
-
-            return {multiLine, elements};
         }
 
         // STATEMENTS
