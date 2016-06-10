@@ -19,8 +19,10 @@ var data = {
                     desc: [
                         'Working with Microsoft Power BI (Business Intelligence) team to develop the next generation of toolset for Big Data and Analytics.',
                         'Developed authoring features and report editor. Worked on build systems and got a good grasp of how software with millions of lines of code is managed.',
-                        'Technologies: Typescript / CSS3 / HTML5 for frontend and C++ on the backend. ']
-                }]
+                        'Technologies: Typescript / CSS3 / HTML5 for frontend and C++ on the backend. '
+                    ]
+                }
+            ]
         },
         {
             companyName: 'Rocketboots',
@@ -36,7 +38,8 @@ var data = {
                         'RocketBoots is a software consultancy firm that provides technology solutions to a growing list of blue chip companies. RocketBoots has expertise in  web, desktop, mobile and embedded solutions.',
                         'Currently at 13 employees and experiencing a fast growth, I joined as employee #1.'
                     ]
-                }]
+                }
+            ]
         },
         {
             companyName: 'Smart Sparrow',
@@ -50,8 +53,10 @@ var data = {
                     video_url: 'BEba5iVmlEQ',
                     desc: [
                         'RocketBoots is a software consultancy firm that provides technology solutions to a growing list of blue chip companies. RocketBoots has expertise in  web, desktop, mobile and embedded solutions.',
-                        'Currently at 13 employees and experiencing a fast growth, I joined as employee #1.']
-                }]
+                        'Currently at 13 employees and experiencing a fast growth, I joined as employee #1.'
+                    ]
+                }
+            ]
         },
         {
             companyName: 'University of New South Wales',
@@ -67,8 +72,10 @@ var data = {
                         'Awarded highest achieving student in \'Computing for Engineers\' in 1 st year.',
                         'Applied for opportunity to tutor 1st year Engineering students and introduce them to programming and problem solving.'
                     ]
-                }]
-        }],
+                }
+            ]
+        }
+    ],
     education: {
         institution_name: 'Univserity of New South Wales (UNSW)',
         institution_url: 'http://unsw.edu.au',
@@ -88,15 +95,15 @@ var data = {
         ]
     },
     skills: [
-        skill, 'Java', level, 'Expert',
-        skill, 'HTML/CSS', level, 'Expert',
-        skill, 'Javascript', level, 'Expert',
-        skill, 'PHP', level, 'Expert',
-        skill, 'Python', level, 'Expert',
-        skill, 'Linux Bash', level, 'Expert',
-        skill, 'Adobe Flash / Flex', level, 'Expert',
-        skill, 'C++', level, 'Intermediate',
-        skill, 'Obj-C', level, 'Intermediate'
+        { skill: 'Java', level: 'Expert' },
+        { skill: 'HTML/CSS', level: 'Expert' },
+        { skill: 'Javascript', level: 'Expert' },
+        { skill: 'PHP', level: 'Expert' },
+        { skill: 'Python', level: 'Expert' },
+        { skill: 'Linux Bash', level: 'Expert' },
+        { skill: 'Adobe Flash / Flex', level: 'Expert' },
+        { skill: 'C++', level: 'Intermediate' },
+        { skill: 'Obj-C', level: 'Intermediate' }
     ],
     achievements: [
         'Startup Weekend Vancouver 2013 – 1st Position',

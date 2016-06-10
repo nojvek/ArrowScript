@@ -630,7 +630,7 @@ namespace ts {
                 return val;
             }
 
-            log(JSON.stringify(sourceFile.statements, replacer, '  '))
+            //log(JSON.stringify(sourceFile.statements, replacer, '  '))
 
             return sourceFile;
         }
@@ -4672,8 +4672,6 @@ namespace ts {
         }
 
         function parseStatement(): Statement {
-            log (arguments.callee);
-
             switch (token) {
                 case SyntaxKind.SemicolonToken:
                     return parseEmptyStatement();

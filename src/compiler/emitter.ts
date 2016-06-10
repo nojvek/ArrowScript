@@ -1863,13 +1863,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 
             function emitArrayLiteral(node: ArrayLiteralExpression) {
                 const elements = node.elements;
+                const multiLine = node.multiLine;
+
                 if (elements.length === 0) {
                     write("[]");
                 }
                 else if (languageVersion >= ScriptTarget.ES6 || !forEach(elements, isSpreadElementExpression)) {
-                    write("[");
-                    emitLinePreservingList(node, node.elements, elements.hasTrailingComma, /*spacesBetweenBraces*/ false);
-                    write("]");
+                    write("[");                
+                    multiLine ? increaseIndent() : write(" ");                
+                    emitList(elements, 0, elements.length, /*multiLine*/ multiLine, /*trailingComma*/ false);
+                    multiLine ? decreaseIndent() : write(" ");
+                    write("]");                    
                 }
                 else {
                     emitListWithSpread(elements, /*needsUniqueCopy*/ true, /*multiLine*/ node.multiLine,
@@ -1883,37 +1887,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
                     return;
                 }
 
-                write("{");
+                const properties = node.properties;
+                const multiLine = node.multiLine;
 
-                if (numElements > 0) {
-                    const properties = node.properties;
-
-                    // If we are not doing a downlevel transformation for object literals,
-                    // then try to preserve the original shape of the object literal.
-                    // Otherwise just try to preserve the formatting.
-                    // if (numElements === properties.length) {
-                    //     emitLinePreservingList(node, properties, /*allowTrailingComma*/ languageVersion >= ScriptTarget.ES5, /*spacesBetweenBraces*/ true);
-                    // }
-                    // else {
-                        const multiLine = node.multiLine;
-                        if (!multiLine) {
-                            write(" ");
-                        }
-                        else {
-                            increaseIndent();
-                        }
-
-                        emitList(properties, 0, numElements, /*multiLine*/ multiLine, /*trailingComma*/ false);
-
-                        if (!multiLine) {
-                            write(" ");
-                        }
-                        else {
-                            decreaseIndent();
-                        }
-                    //}
-                }
-
+                write("{");                
+                multiLine ? increaseIndent() : write(" ");                
+                emitList(properties, 0, numElements, /*multiLine*/ multiLine, /*trailingComma*/ false);
+                multiLine ? decreaseIndent() : write(" ");
                 write("}");
             }
 

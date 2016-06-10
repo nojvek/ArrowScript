@@ -79,15 +79,15 @@ let data =
             'Networks & Distributed Systems'
 
     skills: [>
-        skill: 'Java' level: 'Expert'
-        skill: 'HTML/CSS' level: 'Expert'
-        skill: 'Javascript' level: 'Expert'
-        skill: 'PHP' level: 'Expert'
-        skill: 'Python' level: 'Expert'
-        skill: 'Linux Bash' level: 'Expert'
-        skill: 'Adobe Flash / Flex' level: 'Expert'
-        skill: 'C++' level: 'Intermediate'
-        skill: 'Obj-C' level: 'Intermediate'
+        {> skill: 'Java', level: 'Expert'
+        {> skill: 'HTML/CSS', level: 'Expert'
+        {> skill: 'Javascript', level: 'Expert'
+        {> skill: 'PHP', level: 'Expert'
+        {> skill: 'Python', level: 'Expert'
+        {> skill: 'Linux Bash', level: 'Expert'
+        {> skill: 'Adobe Flash / Flex', level: 'Expert'
+        {> skill: 'C++', level: 'Intermediate'
+        {> skill: 'Obj-C', level: 'Intermediate'
 
     achievements: [>
         'Startup Weekend Vancouver 2013 – 1st Position'
@@ -105,7 +105,6 @@ let data =
         'World vision volunteer'
         'Regular blood donor for Red Cross'
         'University Open Day volunteer'
-
 
 // let render = (data) ->
 //     with data
