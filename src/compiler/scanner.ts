@@ -290,6 +290,8 @@ namespace ts {
     }
 
     const tokenStrings = makeReverseMap(textToToken);
+    tokenStrings[SyntaxKind.IndentToken] = "INDENT";
+    tokenStrings[SyntaxKind.DedentToken] = "DEDENT";
 
     export function tokenToString(t: SyntaxKind): string {
         return tokenStrings[t];
