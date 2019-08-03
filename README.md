@@ -1,10 +1,9 @@
-# TyScript
+# ArrowScript
 
-TyScript is built upon Typescript to support additional like language syntax inspired from coffeescript.
+ArrowScript is built on top of Typescript to support additional like language syntax inspired from coffeescript.
 
-TyScript = TypeScript + Syntatic Sugar
+ArrowScript = TypeScript + Syntatic Sugar
 TypeScript = JavaScript + Types
-TyScript = JavaScript + Types + Syntactic Sugar
 
 # Why? Why not?
 
@@ -15,7 +14,7 @@ Excellent intellisense and error checking as you type is possible because TypeSc
 ## Installing
 
 ```
-npm install -g tyscript
+npm install -g arrowscript
 ```
 
 ## Features
@@ -44,7 +43,7 @@ namespace somelib
             	str: #.hello
                 num: [10, 11, 12]
                 node:
-                	str: "yo"
+                    str: "yo"
                     nums: [
                     	13
                         14
